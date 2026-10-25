@@ -19,7 +19,7 @@
 		{
 			"binding": "DB",
 			"database_name": "pixelpipe-db",
-			"database_id": "00000000-0000-0000-0000-000000000000",
+			"database_id": "419e767e-01aa-4312-9a37-f8cf2f942440",
 			"migrations_dir": "migrations"
 		}
 	],
@@ -39,7 +39,7 @@
 				{
 					"binding": "DB",
 					"database_name": "pixelpipe-db-dev",
-					"database_id": "00000000-0000-0000-0000-000000000000",
+					"database_id": "b5e57b5f-388d-4f2a-b6b3-5c9fc73a1863",
 					"migrations_dir": "migrations"
 				}
 			],
