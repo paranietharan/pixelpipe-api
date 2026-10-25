@@ -289,15 +289,33 @@ Run the following Wrangler commands or create them in the Cloudflare Dashboard:
    - Navigate to **Images** > **Transformations**.
    - Enable transformations for your zone / account.
 
-### 2. Apply Migrations to Remote D1
+### 2. Manual Deployment via GitHub Actions (Recommended)
+
+This repository includes a manual deployment workflow in `.github/workflows/deploy.yml`.
+
+1. Go to your repository on GitHub.
+2. Click on the **Actions** tab.
+3. Select **Deploy PixelPipe API** from the left sidebar.
+4. Click **Run workflow**:
+   - **Use workflow from**: Choose any branch (`main`, `dev`, etc.).
+   - **Target environment**: Select `dev` or `production`.
+5. Click **Run workflow**. The pipeline will automatically:
+   - Run the unit test suite (`pytest`).
+   - Sync Python worker dependencies.
+   - Run D1 migrations on the remote database.
+   - Deploy the Worker to Cloudflare.
+
+### 3. Direct Deployment via CLI (Alternative)
+
+To deploy directly from your local terminal:
 
 ```bash
+# Deploy to Production (default)
 npx wrangler d1 migrations apply DB --remote
-```
-
-### 3. Deploy the Worker
-
-```bash
 npm run deploy
+
+# Deploy to Dev Environment
+npx wrangler d1 migrations apply DB --remote --env dev
+npm run deploy -- --env dev
 ```
-*(or `uv run pywrangler deploy`)*
+
