@@ -85,7 +85,7 @@ jobs:
           if [ "${{ inputs.environment }}" = "dev" ]; then
             npx wrangler deploy --env dev
           else
-            npx wrangler deploy
+            npx wrangler deploy --env=""
           fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
