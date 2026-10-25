@@ -1,5 +1,9 @@
-from workers import Response, WorkerEntrypoint
-from submodule import get_hello_message
+from workers import WorkerEntrypoint
+from router import router
+
+
 class Default(WorkerEntrypoint):
+    """PixelPipe Cloudflare Workers Python Entrypoint."""
+
     async def fetch(self, request):
-        return Response(get_hello_message())
+        return await router.dispatch(request, self.env)
