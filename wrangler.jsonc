@@ -25,5 +25,27 @@
 	],
 	"images": {
 		"binding": "IMAGES"
+	},
+	"env": {
+		"dev": {
+			"name": "pixelpipe-api-dev",
+			"r2_buckets": [
+				{
+					"binding": "IMAGES_BUCKET",
+					"bucket_name": "pixelpipe-images-dev"
+				}
+			],
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "pixelpipe-db-dev",
+					"database_id": "00000000-0000-0000-0000-000000000000",
+					"migrations_dir": "migrations"
+				}
+			],
+			"images": {
+				"binding": "IMAGES"
+			}
+		}
 	}
 }
