@@ -319,3 +319,8 @@ npx wrangler d1 migrations apply DB --remote --env dev
 npm run deploy -- --env dev
 ```
 
+
+
+## Reproducible development checks
+
+Use Node.js 24 LTS and Python 3.12. Run `npm ci`, `uv sync --frozen --python 3.12`, and `uv run --frozen pytest`. CI runs these checks without deployment credentials. Wrangler and pytest tooling are refreshed; compatibility date and R2/D1 bindings are unchanged. The current automated tests use mocked runtime bindings; deployed Cloudflare storage and image transformations still need a separate development-environment test.
