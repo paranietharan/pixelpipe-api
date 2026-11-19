@@ -41,8 +41,8 @@ def row_to_dict(row) -> dict | None:
 async def insert_image(db, id: str, filename: str, key: str, content_type: str, size: int, created_at: str) -> dict:
     """Insert a new image metadata record into D1."""
     query = """
-    INSERT INTO images (id, filename, key, content_type, size, created_at)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO images (id, filename, key, content_type, size, created_at, state)
+    VALUES (?, ?, ?, ?, ?, ?, 'uploading')
     """
     await db.prepare(query).bind(id, filename, key, content_type, size, created_at).run()
     return {
@@ -57,13 +57,30 @@ async def insert_image(db, id: str, filename: str, key: str, content_type: str, 
 
 async def get_image_by_id(db, id: str) -> dict | None:
     """Fetch an image metadata record by ID."""
-    query = "SELECT id, filename, key, content_type, size, created_at FROM images WHERE id = ?"
+    query = "SELECT id, filename, key, content_type, size, created_at FROM images WHERE id = ? AND state = 'ready'"
     row = await db.prepare(query).bind(id).first()
     return row_to_dict(row)
 
 
 async def delete_image_by_id(db, id: str) -> bool:
     """Delete an image metadata record by ID."""
-    query = "DELETE FROM images WHERE id = ?"
+    query = "DELETE FROM images WHERE id = ? AND state = 'deleting'"
     await db.prepare(query).bind(id).run()
     return True
+
+
+async def reconcile_images(env):
+    # Claim stale uploads before removing bytes. The uploader publishes only
+    # while it still owns an 'uploading' row.
+    pending = await env.DB.prepare("""
+        UPDATE images SET state='deleting' WHERE id IN (
+            SELECT id FROM images WHERE state='deleting'
+              OR (state='uploading' AND datetime(created_at)<datetime('now','-1 hour'))
+            ORDER BY created_at LIMIT 32
+        ) RETURNING id, key
+    """).raw()
+    for image_id, key in pending:
+        await env.IMAGES_BUCKET.delete(key)
+        await env.DB.prepare(
+            "DELETE FROM images WHERE id=? AND state='deleting'"
+        ).bind(image_id).run()

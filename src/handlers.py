@@ -78,13 +78,6 @@ async def upload_image_handler(request, env) -> Response:
         else:
             upload_body = js_file
 
-    # Save to R2 bucket
-    await env.IMAGES_BUCKET.put(
-        r2_key,
-        upload_body,
-        httpMetadata={"contentType": content_type},
-    )
-
     # Save metadata in D1 database
     created_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
     record = await insert_image(
@@ -96,6 +89,20 @@ async def upload_image_handler(request, env) -> Response:
         size=size,
         created_at=created_at,
     )
+
+    # Save to R2 bucket
+    await env.IMAGES_BUCKET.put(
+        r2_key,
+        upload_body,
+        httpMetadata={"contentType": content_type},
+    )
+
+    published = await env.DB.prepare(
+        "UPDATE images SET state='ready' WHERE id=? AND state='uploading' RETURNING id"
+    ).bind(image_id).first()
+    if published is None:
+        await env.IMAGES_BUCKET.delete(r2_key)
+        raise RuntimeError("Upload expired before completion")
 
     return json_response(format_image_response(record), status=201)
 
@@ -111,15 +118,12 @@ async def get_image_handler(request, env, image_id: str) -> Response:
 
 async def delete_image_handler(request, env, image_id: str) -> Response:
     """DELETE /v1/images/:imageId - Delete original from R2 and metadata from D1."""
-    record = await get_image_by_id(env.DB, image_id)
-    if not record:
-        raise NotFoundError("IMAGE_NOT_FOUND", "Image not found")
-
-    # Delete original object from R2 bucket
-    await env.IMAGES_BUCKET.delete(record["key"])
-
-    # Delete metadata from D1 database
-    await delete_image_by_id(env.DB, image_id)
+    key = await env.DB.prepare(
+        "UPDATE images SET state='deleting' WHERE id=? AND state IN ('ready','deleting') RETURNING key"
+    ).bind(image_id).first("key")
+    if key is not None:
+        await env.IMAGES_BUCKET.delete(key)
+        await delete_image_by_id(env.DB, image_id)
 
     # Return HTTP 204 No Content
     return Response(None, status=204)

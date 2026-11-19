@@ -9,6 +9,7 @@
 	"observability": {
 		"enabled": true
 	},
+	"triggers": {"crons": ["*/10 * * * *"]},
 	"r2_buckets": [
 		{
 			"binding": "IMAGES_BUCKET",
@@ -29,7 +30,8 @@
 	"env": {
 		"dev": {
 			"name": "pixelpipe-api-dev",
-			"r2_buckets": [
+			"triggers": {"crons": ["*/10 * * * *"]},
+	"r2_buckets": [
 				{
 					"binding": "IMAGES_BUCKET",
 					"bucket_name": "pixelpipe-images-dev"
