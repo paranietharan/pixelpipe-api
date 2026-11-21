@@ -319,3 +319,5 @@ npx wrangler d1 migrations apply DB --remote --env dev
 npm run deploy -- --env dev
 ```
 
+
+Apply migration 0002 before deploying the updated worker. Existing images default to ready. A scheduled cleanup retries interrupted deletions and reclaims incomplete uploads after one hour. Repeated deletes return 204.
